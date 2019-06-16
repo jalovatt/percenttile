@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# Move the current window to a position and size on the current
+# monitor specified by percentages
+#
+# Usage: percenttile x=0.5 y=0.333 w=0.2 h=1
+#
+# This script is very much tailored to my setup and may not work for others.
+# Unfortunately I don't know enough about the shell or X to make it more general.
+#
+# Borrows heavily from:
+# https://github.com/jc00ke/move-to-next-monitor
+
+USAGE="Usage: percenttile x=0.5 y=0.333 w=0.2 h=1"
+
+# I can't find a way to detect the current display's working area and, therefore,
+# if it has a panel and how tall the panel is
+PANEL_H=28
+
+if [ -z "$1" ]; then
+ echo $USAGE
+ exit 1
+fi
+
+while getopts "x:y:w:h:" opt; do
+  case ${opt} in
+    x )
+      percent_x=$OPTARG
+      ;;
+    y )
+      percent_y=$OPTARG
+      ;;
+    w )
+      percent_w=$OPTARG
+      ;;
+    h )
+      percent_h=$OPTARG
+      ;;
+    \? )
+      echo $USAGE
+      exit 1
+      ;;
+  esac
+done
+
+# Monitor dimensions
+display_w=$(xdotool getdisplaygeometry | cut -d" " -f1)
+display_h=$(xdotool getdisplaygeometry | cut -d" " -f2)
+
+# Height minus any panels
+desktop_h=$(wmctrl -d | awk 'NR==1 && $3=="DG:" {print $9}' | cut -d"x" -f2)
+
+
+window_id=$(xdotool getactivewindow)
+
+# Read window position
+x=$(xwininfo -id "$window_id" | awk '/Absolute upper-left X:/ { print $4 }')
+y=$(xwininfo -id "$window_id" | awk '/Absolute upper-left Y:/ { print $4 }')
+
+# Subtract any offsets caused by window decorations
+x_offset=$(xwininfo -id "$window_id" | awk '/Relative upper-left X:/ { print $4 }')
+y_offset=$(xwininfo -id "$window_id" | awk '/Relative upper-left Y:/ { print $4 }')
+x=$(( x - x_offset))
+y=$(( y - y_offset))
+
+# See if we're on the right of two monitors
+if [ "$x" -ge "$display_w" ]; then
+  display_x=$display_w
+else
+  display_x=0
+fi
+
+# See if we're on the bottom of two monitors
+if [ "$y" -ge "$display_h" ]; then
+  display_y=$display_h
+else
+  display_y=0
+fi
+
+# If we're on the bottom-most monitor, subtract the panel's height
+if [ "$(( y + display_h ))" -ge "$desktop_h" ]; then
+  working_h=$((display_h - PANEL_H))
+else
+  working_h=$display_h
+fi
+
+final_x=$(echo "scale=6;$display_x + ($display_w * $percent_x )" | bc)
+final_y=$(echo "scale=6;$display_y + ($working_h * $percent_y )" | bc)
+final_w=$(echo "scale=6;$display_w * $percent_w" | bc)
+final_h=$(echo "scale=6;$working_h * $percent_h" | bc)
+
+# echo $final_x $final_y $final_w $final_h
+
+# Un-maximize current window so that we can move it
+wmctrl -ir "$window_id" -b remove,maximized_vert,maximized_horz
+
+# Doing this twice because some windows (i.e. terminals) don't end up at the right
+# dimensions the first time. No idea why.
+xdotool getactivewindow windowmove $final_x $final_y windowsize $final_w $final_h
+sleep 0.1
+xdotool getactivewindow windowmove $final_x $final_y windowsize $final_w $final_h
