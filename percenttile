@@ -3,7 +3,7 @@
 # Move the current window to a position and size on the current
 # monitor specified by percentages
 #
-# Usage: percenttile x=0.5 y=0.333 w=0.2 h=1
+# Usage: percenttile -x 0.5 -y 0.333 -w 0.2 -h 1
 #
 # This script is very much tailored to my setup and may not work for others.
 # Unfortunately I don't know enough about the shell or X to make it more general.
@@ -11,11 +11,16 @@
 # Borrows heavily from:
 # https://github.com/jc00ke/move-to-next-monitor
 
-USAGE="Usage: percenttile x=0.5 y=0.333 w=0.2 h=1"
+USAGE="Usage: percenttile -x 0.5 -y 0.333 -w 0.2 -h 1"
 
 # I can't find a way to detect the current display's working area and, therefore,
 # if it has a panel and how tall the panel is
 PANEL_H=28
+
+percent_x=0
+percent_y=0
+percent_w=1
+percent_h=1
 
 if [ -z "$1" ]; then
  echo $USAGE
