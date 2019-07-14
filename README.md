@@ -17,10 +17,11 @@ mv percenttile ~/bin #or anywhere in your PATH
 ## Usage
 
 ```sh
-percenttile x=0.5 y=0.333 w=0.2 h=1
+percenttile -x 0.5 -y 0.333 -w 0.2 -h 1
 ```
 
-Apps that are line- or column-based, like a terminal, may need some fiddling to get them exactly where you want. For instance, I have to use a height of `0.98` with my terminal to fill as much of the available space as possible without adding a line and spilling past the bottom panel.
+- Apps that are line- or column-based, like a terminal, may need some fiddling to get them exactly where you want. For instance, I have to use a height of `0.98` with my terminal to fill as much of the available space as possible without adding a line and spilling past the bottom panel.
+- Apps that remove the WM-provided title bar, like Chrome or VS Code, may likewise need some tinkering to get their final dimensions correct.
 
 ## Dependencies
 
